@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Light theme */
+  --bg: #fafaf9;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f0f0ee;
+  --border: #e2e2df;
+  --ink: #17181a;
+  --ink-dim: #52525b;
+  --ink-faint: #8a8a86;
+  --accent: #0f766e;   /* teal */
+  --accent-2: #b45309; /* amber */
+}
+
+.dark {
+  --bg: #0a0b0c;
+  --bg-elevated: #101214;
+  --bg-hover: #17191c;
+  --border: #23262a;
+  --ink: #e6e6e3;
+  --ink-dim: #9a9c9f;
+  --ink-faint: #5f6266;
+  --accent: #2dd4bf;   /* teal */
+  --accent-2: #f59e0b; /* amber */
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--bg);
+}
+
+/* Thin, unobtrusive scrollbars matching the terminal aesthetic */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Note reading typography */
+.note-prose {
+  color: var(--ink);
+}
+.note-prose h1,
+.note-prose h2,
+.note-prose h3,
+.note-prose h4 {
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  scroll-margin-top: 5rem;
+}
+.note-prose h2 {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5em;
+  margin-top: 2em;
+}
+.note-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.note-prose strong {
+  color: var(--ink);
+}
+.note-prose blockquote {
+  border-left: 3px solid var(--accent);
+  color: var(--ink-dim);
+  font-style: normal;
+}
+.note-prose table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-collapse: collapse;
+  width: 100%;
+}
+.note-prose th,
+.note-prose td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  white-space: normal;
+}
+.note-prose thead {
+  background-color: var(--bg-hover);
+}
+.note-prose code {
+  font-family: var(--font-mono);
+  background-color: var(--bg-hover);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+.note-prose pre {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.note-prose pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85em;
+  line-height: 1.6;
+  white-space: pre;
+}
+.note-prose hr {
+  border-color: var(--border);
+}
+.note-prose img {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* Diagram / monospace block preserves exact spacing on all screen sizes */
+.diagram-block {
+  font-family: var(--font-mono);
+  white-space: pre;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+@media (min-width: 640px) {
+  .diagram-block {
+    font-size: 0.85rem;
+  }
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  color: var(--ink);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.input::placeholder {
+  color: var(--ink-faint);
+}
+.input:focus {
+  border-color: var(--accent);
+}
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
