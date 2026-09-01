@@ -69,7 +69,7 @@ export default function FolderBrowser({ folderId }: { folderId: string | null })
     };
   }, [data, folderId, data.version]);
 
-  function refresh(newId?: string) {
+  function refresh() {
     data.listChildren(folderId).then(setChildren);
   }
 
@@ -176,35 +176,56 @@ function Section({
 function NodeCardGrid({ node, onChanged }: { node: AppNode; onChanged: () => void }) {
   const href = node.type === "folder" ? `/f/${node.id}` : `/n/${node.id}`;
   return (
-    <Link
-      href={href}
-      className="group relative flex flex-col gap-2 rounded-xl border border-border bg-bg-elevated p-4 hover:border-accent/40 hover:bg-bg-hover transition-colors"
-    >
-      <div className="flex items-start justify-between">
-        <NodeIcon node={node} size={20} className="text-accent" />
-        {node.metadata.importance === "High" && <Star size={13} className="fill-accent-2 text-accent-2" />}
+    <div className="group relative rounded-xl border border-border bg-bg-elevated hover:border-accent/40 hover:bg-bg-hover transition-colors">
+      <Link
+        href={href}
+        className="flex flex-col gap-2 p-4 h-full"
+      >
+        <div className="flex items-start justify-between pr-6">
+          <NodeIcon node={node} size={20} className="text-accent" />
+          {node.metadata.importance === "High" && <Star size={13} className="fill-accent-2 text-accent-2" />}
+        </div>
+        <p className="text-sm text-ink font-medium truncate">{node.name}</p>
+        <p className="text-xs text-ink-faint">{summaryFor(node)}</p>
+      </Link>
+      <div 
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <NodeActionsMenu node={node} onChanged={onChanged} />
       </div>
-      <p className="text-sm text-ink font-medium truncate">{node.name}</p>
-      <p className="text-xs text-ink-faint">{summaryFor(node)}</p>
-      <NodeActionsMenu node={node} onChanged={onChanged} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100" />
-    </Link>
+    </div>
   );
 }
 
 function NodeRowList({ node, onChanged }: { node: AppNode; onChanged: () => void }) {
   const href = node.type === "folder" ? `/f/${node.id}` : `/n/${node.id}`;
   return (
-    <Link href={href} className="group flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors">
-      <NodeIcon node={node} size={17} className="text-accent shrink-0" />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <span className="truncate text-sm text-ink">{node.name}</span>
-          {node.metadata.importance === "High" && <Star size={12} className="shrink-0 fill-accent-2 text-accent-2" />}
+    <div className="group flex items-center justify-between px-4 py-3 hover:bg-bg-hover transition-colors">
+      <Link href={href} className="flex items-center gap-3 min-w-0 flex-1">
+        <NodeIcon node={node} size={17} className="text-accent shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate text-sm text-ink">{node.name}</span>
+            {node.metadata.importance === "High" && <Star size={12} className="shrink-0 fill-accent-2 text-accent-2" />}
+          </span>
+          <span className="block text-xs text-ink-faint">{summaryFor(node)}</span>
         </span>
-        <span className="block text-xs text-ink-faint">{summaryFor(node)}</span>
-      </span>
-      <span className="hidden sm:block shrink-0 text-xs text-ink-faint">{formatDate(node.updatedAt)}</span>
-      <NodeActionsMenu node={node} onChanged={onChanged} />
-    </Link>
+      </Link>
+      <div className="flex items-center gap-3 shrink-0 ml-2">
+        <span className="hidden sm:block text-xs text-ink-faint">{formatDate(node.updatedAt)}</span>
+        <div 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <NodeActionsMenu node={node} onChanged={onChanged} />
+        </div>
+      </div>
+    </div>
   );
 }

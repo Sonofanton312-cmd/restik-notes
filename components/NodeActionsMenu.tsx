@@ -24,16 +24,30 @@ export default function NodeActionsMenu({
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
   return (
-    <div ref={ref} className={`relative ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div 
+      ref={ref} 
+      className={`relative ${className}`} 
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
       <button
-        onClick={() => setOpen((v) => !v)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
         className="p-1.5 rounded-lg text-ink-faint hover:text-ink hover:bg-bg-hover transition-colors"
         aria-label="More actions"
       >
@@ -41,9 +55,18 @@ export default function NodeActionsMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-lg border border-border bg-bg-elevated py-1 shadow-lg">
+        <div 
+          className="absolute right-0 top-full mt-1 z-20 w-40 rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               setModal("rename");
               setOpen(false);
             }}
@@ -52,7 +75,10 @@ export default function NodeActionsMenu({
             <Pencil size={14} /> Rename
           </button>
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               setModal("move");
               setOpen(false);
             }}
@@ -61,7 +87,10 @@ export default function NodeActionsMenu({
             <FolderInput size={14} /> Move
           </button>
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               setModal("delete");
               setOpen(false);
             }}
@@ -85,9 +114,19 @@ export default function NodeActionsMenu({
           onClose={() => setModal(null)}
         />
       )}
-      {modal === "move" && <MoveModal node={node} onClose={() => setModal(null)} onMoved={onChanged} />}
+      {modal === "move" && (
+        <MoveModal 
+          node={node} 
+          onClose={() => setModal(null)} 
+          onMoved={onChanged} 
+        />
+      )}
       {modal === "delete" && (
-        <ConfirmDeleteModal node={node} onClose={() => setModal(null)} onDeleted={onChanged} />
+        <ConfirmDeleteModal 
+          node={node} 
+          onClose={() => setModal(null)} 
+          onDeleted={onChanged} 
+        />
       )}
     </div>
   );
