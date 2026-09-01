@@ -84,8 +84,16 @@ export default function FolderBrowser({ folderId }: { folderId: string | null })
     );
   }
 
-  const folders = (children ?? []).filter((n) => n.type === "folder");
-  const content = (children ?? []).filter((n) => n.type !== "folder");
+  const naturalSort = (a: AppNode, b: AppNode) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+
+  const folders = (children ?? [])
+    .filter((n) => n.type === "folder")
+    .sort(naturalSort);
+
+  const content = (children ?? [])
+    .filter((n) => n.type !== "folder")
+    .sort(naturalSort);
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
