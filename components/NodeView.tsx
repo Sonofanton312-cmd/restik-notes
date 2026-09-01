@@ -12,6 +12,7 @@ import Markdown from "./Markdown";
 import TableOfContents from "./TableOfContents";
 import AttachmentsList from "./AttachmentsList";
 import LinkModal from "./LinkModal";
+import QuestionQuickJump from "./QuestionQuickJump";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { Pencil, Star, ExternalLink, Download } from "lucide-react";
 
@@ -88,7 +89,6 @@ export default function NodeView({ nodeId }: { nodeId: string }) {
           <NodeActionsMenu
             node={node}
             onChanged={() => {
-              // If this node itself got deleted, bounce to its parent folder.
               data.getNode(nodeId).then((n) => {
                 if (!n) router.push(node.parentId ? `/f/${node.parentId}` : "/f/root");
               });
@@ -96,6 +96,9 @@ export default function NodeView({ nodeId }: { nodeId: string }) {
           />
         </div>
       </div>
+
+      {/* Quick Jump bar appears ONLY for questions */}
+      {node.type === "question" && <QuestionQuickJump currentNode={node} />}
 
       {node.type === "question" && <QuestionBody node={node} onChanged={refresh} />}
       {node.type === "note" && <NoteBody node={node} />}
