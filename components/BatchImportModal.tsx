@@ -26,11 +26,22 @@ export default function BatchImportModal({
 
   if (!isOpen) return null;
 
+  function sanitizeJson(raw: string): string {
+    // Escapes any backslash-u not immediately followed by 4 hexadecimal digits
+    return raw.replace(/\\u(?![0-9a-fA-F]{4})/g, "\\\\u");
+  }
+
   async function processImport(jsonContent: string) {
     try {
       setLoading(true);
       setError("");
-      const payload = JSON.parse(jsonContent);
+
+      let payload: any;
+      try {
+        payload = JSON.parse(jsonContent);
+      } catch {
+        payload = JSON.parse(sanitizeJson(jsonContent));
+      }
 
       let targetFolderId: string | null = currentFolderId;
 
