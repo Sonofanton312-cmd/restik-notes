@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { FileCode, AlertCircle, Loader2 } from "lucide-react";
-import { useData } from "@/lib/DataContext";
+import { useData, QuestionInput } from "@/lib/DataContext";
 import Modal from "./Modal";
 
 interface BatchImportModalProps {
@@ -32,77 +32,67 @@ export default function BatchImportModal({
       setError("");
       const payload = JSON.parse(jsonContent);
 
-      let targetFolderId: string | undefined = currentFolderId ?? undefined;
+      let targetFolderId: string | null = currentFolderId;
 
-      // 1. Create root folder if present in JSON
+      // 1. Root Subject Folder (parentId, name)
       if (payload.folderName) {
         setStatus(`Creating folder: ${payload.folderName}`);
-        const parentFolder = await (data as any).createFolder(targetFolderId ?? null, payload.folderName);
-        targetFolderId = parentFolder?.id ?? targetFolderId;
+        const parentFolder = await data.createFolder(targetFolderId, payload.folderName);
+        targetFolderId = parentFolder.id;
       }
 
-      // Helper function to safely call createQuestion regardless of parameter style
-      async function insertQuestion(folderId: string | undefined, q: any, fallbackIdx: number) {
-        const title = (q.name || q.question || q.title || `Question ${fallbackIdx + 1}`).trim();
-        const questionText = q.question || q.name || title;
-        const answerText = q.answer || q.body || "";
-
-        const metadata = {
-          marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : null,
-          importance: q.importance || "None",
-          tags: Array.isArray(q.tags) ? q.tags : [],
-        };
-
-        const content = {
-          question: questionText,
-          answer: answerText,
-        };
-
-        // Try (parentId, name, { metadata, content }) first
-        try {
-          await (data as any).createQuestion(folderId ?? null, title, { metadata, content });
-        } catch {
-          // Fallback to (parentId, { name, metadata, content })
-          await (data as any).createQuestion(folderId ?? null, {
-            name: title,
-            metadata,
-            content,
-          });
-        }
-      }
-
-      // 2. Process subfolders
+      // 2. Subfolders (Units)
       const subfolders = payload.subfolders || [];
       for (let i = 0; i < subfolders.length; i++) {
         const sf = subfolders[i];
-        const subfolderName = sf.name || `Unit ${i + 1}`;
-        setStatus(`Creating subfolder: ${subfolderName}`);
-        
-        const createdSubfolder = await (data as any).createFolder(targetFolderId ?? null, subfolderName);
-        const activeSubfolderId = createdSubfolder?.id ?? targetFolderId;
+        setStatus(`Creating unit: ${sf.name}`);
+        const unitFolder = await data.createFolder(targetFolderId, sf.name);
 
+        // 3. Questions inside the unit
         const questions = sf.questions || [];
         for (let j = 0; j < questions.length; j++) {
           const q = questions[j];
-          setStatus(`Creating [${subfolderName}] Q${j + 1}...`);
-          await insertQuestion(activeSubfolderId, q, j);
+          const questionName = q.name || `Question ${j + 1}`;
+          setStatus(`Adding ${questionName}`);
+
+          const questionPayload: QuestionInput = {
+            name: questionName,
+            question: questionName,
+            answer: q.answer || "",
+            marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : undefined,
+            tags: Array.isArray(q.tags) ? q.tags : [],
+            importance: q.importance || "None",
+          };
+
+          await data.createQuestion(unitFolder.id, questionPayload);
         }
       }
 
-      // 3. Process direct root-level questions
+      // 4. Direct questions if any exist outside subfolders
       if (payload.questions && Array.isArray(payload.questions)) {
         for (let k = 0; k < payload.questions.length; k++) {
           const q = payload.questions[k];
-          setStatus(`Adding Q${k + 1}...`);
-          await insertQuestion(targetFolderId, q, k);
+          const questionName = q.name || `Question ${k + 1}`;
+          setStatus(`Adding ${questionName}`);
+
+          const questionPayload: QuestionInput = {
+            name: questionName,
+            question: questionName,
+            answer: q.answer || "",
+            marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : undefined,
+            tags: Array.isArray(q.tags) ? q.tags : [],
+            importance: q.importance || "None",
+          };
+
+          await data.createQuestion(targetFolderId, questionPayload);
         }
       }
 
       setStatus("Done!");
       onImported();
-      setTimeout(onClose, 800);
+      setTimeout(onClose, 600);
     } catch (err: any) {
-      setError(err.message || "Failed to parse or upload JSON format.");
+      setError(err.message || "Failed to process JSON file.");
     } finally {
       setLoading(false);
     }
@@ -124,7 +114,7 @@ export default function BatchImportModal({
     <Modal title="Batch Import Notes" onClose={onClose}>
       <div className="p-5">
         <p className="text-xs text-ink-dim mb-4">
-          Upload a <code>.json</code> file to recursively build units and questions automatically.
+          Upload <code>cn-unit-01.json</code> to create the unit and all questions automatically.
         </p>
 
         <input
