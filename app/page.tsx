@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { AppNode, NodePath } from "@/types/node";
 import { useData } from "@/lib/DataContext";
 import NodeIcon from "@/components/NodeIcon";
 import NewMenu from "@/components/NewMenu";
+import NodeActionsMenu from "@/components/NodeActionsMenu";
 import SearchTriggerButton from "@/components/SearchTriggerButton";
 import { formatDate } from "@/lib/utils";
 import { Folder as FolderIcon, ArrowRight } from "lucide-react";
@@ -15,10 +16,16 @@ export default function HomePage() {
   const [recent, setRecent] = useState<{ node: AppNode; path: NodePath }[]>([]);
   const [topLevel, setTopLevel] = useState<AppNode[]>([]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     data.listRecent(6).then(setRecent);
-    data.listChildren(null).then((children) => setTopLevel(children.filter((n) => n.type === "folder")));
-  }, [data, data.version]);
+    data.listChildren(null).then((children) =>
+      setTopLevel(children.filter((n) => n.type === "folder"))
+    );
+  }, [data]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh, data.version]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-16">
@@ -33,7 +40,7 @@ export default function HomePage() {
       <SearchTriggerButton />
 
       <div className="mt-6 flex justify-center">
-        <NewMenu parentId={null} onCreated={() => {}} />
+        <NewMenu parentId={null} onCreated={refresh} />
       </div>
 
       {topLevel.length > 0 && (
@@ -41,14 +48,28 @@ export default function HomePage() {
           <p className="mb-3 text-sm font-mono uppercase tracking-wider text-ink-dim">My Notes</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {topLevel.map((f) => (
-              <Link
+              <div
                 key={f.id}
-                href={`/f/${f.id}`}
-                className="flex items-center gap-2.5 rounded-xl border border-border bg-bg-elevated p-4 hover:border-accent/40 hover:bg-bg-hover transition-colors"
+                className="group relative flex items-center justify-between rounded-xl border border-border bg-bg-elevated p-4 hover:border-accent/40 hover:bg-bg-hover transition-colors"
               >
-                <FolderIcon size={17} className="text-accent shrink-0" />
-                <span className="truncate text-sm text-ink font-medium">{f.name}</span>
-              </Link>
+                <Link
+                  href={`/f/${f.id}`}
+                  className="flex items-center gap-2.5 min-w-0 flex-1 pr-2"
+                >
+                  <FolderIcon size={17} className="text-accent shrink-0" />
+                  <span className="truncate text-sm text-ink font-medium">{f.name}</span>
+                </Link>
+
+                <div
+                  className="shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <NodeActionsMenu node={f} onChanged={refresh} />
+                </div>
+              </div>
             ))}
           </div>
         </div>
