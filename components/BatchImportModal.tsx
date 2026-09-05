@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { FileCode, AlertCircle, Loader2 } from "lucide-react";
-import { useData, QuestionInput } from "@/lib/DataContext";
+import { useData } from "@/lib/DataContext";
 import Modal from "./Modal";
 
 interface BatchImportModalProps {
@@ -34,7 +34,7 @@ export default function BatchImportModal({
 
       let targetFolderId: string | null = currentFolderId;
 
-      // 1. Root Subject Folder (parentId, name)
+      // 1. Root Subject Folder
       if (payload.folderName) {
         setStatus(`Creating folder: ${payload.folderName}`);
         const parentFolder = await data.createFolder(targetFolderId, payload.folderName);
@@ -55,36 +55,15 @@ export default function BatchImportModal({
           const questionName = q.name || `Question ${j + 1}`;
           setStatus(`Adding ${questionName}`);
 
-          const questionPayload: QuestionInput = {
+          // Matches QuestionInput expected by createQuestion(parentId, data)
+          await data.createQuestion(unitFolder.id, {
             name: questionName,
             question: questionName,
             answer: q.answer || "",
-            marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : undefined,
-            tags: Array.isArray(q.tags) ? q.tags : [],
+            marks: q.marks ? Number(q.marks) : undefined,
             importance: q.importance || "None",
-          };
-
-          await data.createQuestion(unitFolder.id, questionPayload);
-        }
-      }
-
-      // 4. Direct questions if any exist outside subfolders
-      if (payload.questions && Array.isArray(payload.questions)) {
-        for (let k = 0; k < payload.questions.length; k++) {
-          const q = payload.questions[k];
-          const questionName = q.name || `Question ${k + 1}`;
-          setStatus(`Adding ${questionName}`);
-
-          const questionPayload: QuestionInput = {
-            name: questionName,
-            question: questionName,
-            answer: q.answer || "",
-            marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : undefined,
             tags: Array.isArray(q.tags) ? q.tags : [],
-            importance: q.importance || "None",
-          };
-
-          await data.createQuestion(targetFolderId, questionPayload);
+          });
         }
       }
 
@@ -92,7 +71,7 @@ export default function BatchImportModal({
       onImported();
       setTimeout(onClose, 600);
     } catch (err: any) {
-      setError(err.message || "Failed to process JSON file.");
+      setError(err.message || "Failed to import JSON.");
     } finally {
       setLoading(false);
     }
@@ -114,7 +93,7 @@ export default function BatchImportModal({
     <Modal title="Batch Import Notes" onClose={onClose}>
       <div className="p-5">
         <p className="text-xs text-ink-dim mb-4">
-          Upload <code>cn-unit-01.json</code> to create the unit and all questions automatically.
+          Upload <code>cn-unit-01.json</code> to automatically populate your unit with all markdown answers.
         </p>
 
         <input
