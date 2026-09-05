@@ -48,14 +48,13 @@ export default function BatchImportModal({
         setStatus(`Creating unit: ${sf.name}`);
         const unitFolder = await data.createFolder(targetFolderId, sf.name);
 
-        // 3. Questions inside the unit
+        // 3. Questions inside unit
         const questions = sf.questions || [];
         for (let j = 0; j < questions.length; j++) {
           const q = questions[j];
           const questionName = q.name || `Question ${j + 1}`;
           setStatus(`Adding ${questionName}`);
 
-          // Matches QuestionInput expected by createQuestion(parentId, data)
           await data.createQuestion(unitFolder.id, {
             name: questionName,
             question: questionName,
@@ -93,7 +92,7 @@ export default function BatchImportModal({
     <Modal title="Batch Import Notes" onClose={onClose}>
       <div className="p-5">
         <p className="text-xs text-ink-dim mb-4">
-          Upload <code>cn-unit-01.json</code> to automatically populate your unit with all markdown answers.
+          Upload your notes JSON file to create units and questions automatically.
         </p>
 
         <input
