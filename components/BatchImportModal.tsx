@@ -32,81 +32,69 @@ export default function BatchImportModal({
       setError("");
       const payload = JSON.parse(jsonContent);
 
-      // Target folder ID (converted from string | null to string | undefined for DataContext compatibility)
       let targetFolderId: string | undefined = currentFolderId ?? undefined;
 
-      // 1. Create root folder if defined in the JSON
+      // 1. Create root folder if present in JSON
       if (payload.folderName) {
         setStatus(`Creating folder: ${payload.folderName}`);
-        const parentFolder = await (data as any).createFolder(payload.folderName, targetFolderId);
-        targetFolderId = parentFolder.id;
+        const parentFolder = await (data as any).createFolder(targetFolderId ?? null, payload.folderName);
+        targetFolderId = parentFolder?.id ?? targetFolderId;
+      }
+
+      // Helper function to safely call createQuestion regardless of parameter style
+      async function insertQuestion(folderId: string | undefined, q: any, fallbackIdx: number) {
+        const title = (q.name || q.question || q.title || `Question ${fallbackIdx + 1}`).trim();
+        const questionText = q.question || q.name || title;
+        const answerText = q.answer || q.body || "";
+
+        const metadata = {
+          marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : null,
+          importance: q.importance || "None",
+          tags: Array.isArray(q.tags) ? q.tags : [],
+        };
+
+        const content = {
+          question: questionText,
+          answer: answerText,
+        };
+
+        // Try (parentId, name, { metadata, content }) first
+        try {
+          await (data as any).createQuestion(folderId ?? null, title, { metadata, content });
+        } catch {
+          // Fallback to (parentId, { name, metadata, content })
+          await (data as any).createQuestion(folderId ?? null, {
+            name: title,
+            metadata,
+            content,
+          });
+        }
       }
 
       // 2. Process subfolders
       const subfolders = payload.subfolders || [];
       for (let i = 0; i < subfolders.length; i++) {
         const sf = subfolders[i];
-        setStatus(`Creating subfolder: ${sf.name}`);
-        const createdSubfolder = await (data as any).createFolder(sf.name, targetFolderId);
+        const subfolderName = sf.name || `Unit ${i + 1}`;
+        setStatus(`Creating subfolder: ${subfolderName}`);
+        
+        const createdSubfolder = await (data as any).createFolder(targetFolderId ?? null, subfolderName);
+        const activeSubfolderId = createdSubfolder?.id ?? targetFolderId;
 
-        // 3. Process questions inside subfolder
         const questions = sf.questions || [];
         for (let j = 0; j < questions.length; j++) {
           const q = questions[j];
-          setStatus(`Creating [${sf.name}] ${q.name || `Question ${j + 1}`}`);
-
-          const questionPayload = {
-            name: q.name,
-            metadata: {
-              marks: q.marks ?? null,
-              importance: q.importance ?? "None",
-              tags: q.tags ?? [],
-            },
-            content: {
-              question: q.name,
-              answer: q.answer || "",
-            },
-          };
-
-          // Handles both 2-argument (parentId, data) and 1-argument object styles
-          if ((data as any).createQuestion.length >= 2) {
-            await (data as any).createQuestion(createdSubfolder.id, questionPayload);
-          } else {
-            await (data as any).createQuestion({
-              parentId: createdSubfolder.id,
-              ...questionPayload,
-            });
-          }
+          setStatus(`Creating [${subfolderName}] Q${j + 1}...`);
+          await insertQuestion(activeSubfolderId, q, j);
         }
       }
 
-      // 4. Process direct questions if root level contains questions without subfolders
+      // 3. Process direct root-level questions
       if (payload.questions && Array.isArray(payload.questions)) {
         for (let k = 0; k < payload.questions.length; k++) {
           const q = payload.questions[k];
-          setStatus(`Adding ${q.name}...`);
-
-          const questionPayload = {
-            name: q.name,
-            metadata: {
-              marks: q.marks ?? null,
-              importance: q.importance ?? "None",
-              tags: q.tags ?? [],
-            },
-            content: {
-              question: q.name,
-              answer: q.answer || "",
-            },
-          };
-
-          if ((data as any).createQuestion.length >= 2) {
-            await (data as any).createQuestion(targetFolderId, questionPayload);
-          } else {
-            await (data as any).createQuestion({
-              parentId: targetFolderId,
-              ...questionPayload,
-            });
-          }
+          setStatus(`Adding Q${k + 1}...`);
+          await insertQuestion(targetFolderId, q, k);
         }
       }
 
