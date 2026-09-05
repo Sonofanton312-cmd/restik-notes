@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FolderPlus, HelpCircle, FileText, Upload, Link2 } from "lucide-react";
+import { Plus, FolderPlus, HelpCircle, FileText, Upload, Link2, FileUp } from "lucide-react";
 import { useData } from "@/lib/DataContext";
 import PromptModal from "./PromptModal";
 import LinkModal from "./LinkModal";
+import BatchImportModal from "./BatchImportModal";
 
 /**
  * The single "+ New" control used at every level of the tree — root,
@@ -24,7 +25,7 @@ export default function NewMenu({
   const data = useData();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [modal, setModal] = useState<"folder" | "link" | null>(null);
+  const [modal, setModal] = useState<"folder" | "link" | "batch" | null>(null);
   const [uploadError, setUploadError] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +94,15 @@ export default function NewMenu({
           </button>
           <button
             onClick={() => {
+              setModal("batch");
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-accent hover:bg-bg-hover font-medium border-y border-border my-1 py-2"
+          >
+            <FileUp size={15} /> Import JSON Batch
+          </button>
+          <button
+            onClick={() => {
               setOpen(false);
               fileInputRef.current?.click();
             }}
@@ -149,6 +159,14 @@ export default function NewMenu({
             onCreated(node.id);
           }}
           onClose={() => setModal(null)}
+        />
+      )}
+      {modal === "batch" && (
+        <BatchImportModal
+          currentFolderId={parentId}
+          isOpen={true}
+          onClose={() => setModal(null)}
+          onImported={() => onCreated()}
         />
       )}
     </div>
