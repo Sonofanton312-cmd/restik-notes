@@ -11,7 +11,11 @@ interface Heading {
   level: number;
 }
 
-function extractHeadings(markdown: string): Heading[] {
+function extractHeadings(markdown?: string | null): Heading[] {
+  if (!markdown || typeof markdown !== "string") {
+    return [];
+  }
+
   const slugger = new GithubSlugger();
   const headings: Heading[] = [];
   const lines = markdown.split("\n");
@@ -35,7 +39,7 @@ function extractHeadings(markdown: string): Heading[] {
 }
 
 /** Only worth showing for genuinely long answers — otherwise it's noise. */
-export default function TableOfContents({ content }: { content: string }) {
+export default function TableOfContents({ content }: { content?: string | null }) {
   const headings = useMemo(() => extractHeadings(content), [content]);
   const [open, setOpen] = useState(true);
 
@@ -44,13 +48,14 @@ export default function TableOfContents({ content }: { content: string }) {
   return (
     <div className="mb-6 rounded-xl border border-border bg-bg-elevated overflow-hidden">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-ink-faint"
       >
         <span className="flex items-center gap-2">
-          <List size={13} /> Sections
+          <List size="{13}"/> Sections
         </span>
-        <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
+        <ChevronDown "rotate-180")} && className="{cn("transition-transform"," open size="{14}"/>
       </button>
       {open && (
         <nav className="px-4 pb-3 space-y-1">
