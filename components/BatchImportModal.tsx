@@ -45,19 +45,46 @@ export default function BatchImportModal({
 
       let targetFolderId: string | null = currentFolderId;
 
-      // 1. Root Subject Folder
+      // 1. Root Subject Folder (Check if already exists under current target)
       if (payload.folderName) {
-        setStatus(`Creating folder: ${payload.folderName}`);
-        const parentFolder = await data.createFolder(targetFolderId, payload.folderName);
-        targetFolderId = parentFolder.id;
+        setStatus(`Checking folder: ${payload.folderName}`);
+        const existingFolders = await data.listChildren(targetFolderId);
+        const matchedFolder = existingFolders.find(
+          (node) =>
+            node.type === "folder" &&
+            node.name.trim().toLowerCase() === payload.folderName.trim().toLowerCase()
+        );
+
+        if (matchedFolder) {
+          targetFolderId = matchedFolder.id;
+        } else {
+          setStatus(`Creating folder: ${payload.folderName}`);
+          const parentFolder = await data.createFolder(targetFolderId, payload.folderName);
+          targetFolderId = parentFolder.id;
+        }
       }
 
-      // 2. Subfolders (Units)
+      // 2. Subfolders / Units (Check if already exists under the subject folder)
       const subfolders = payload.subfolders || [];
       for (let i = 0; i < subfolders.length; i++) {
         const sf = subfolders[i];
-        setStatus(`Creating unit: ${sf.name}`);
-        const unitFolder = await data.createFolder(targetFolderId, sf.name);
+        setStatus(`Checking unit: ${sf.name}`);
+
+        const existingUnits = await data.listChildren(targetFolderId);
+        const matchedUnit = existingUnits.find(
+          (node) =>
+            node.type === "folder" &&
+            node.name.trim().toLowerCase() === sf.name.trim().toLowerCase()
+        );
+
+        let unitFolderId: string;
+        if (matchedUnit) {
+          unitFolderId = matchedUnit.id;
+        } else {
+          setStatus(`Creating unit: ${sf.name}`);
+          const unitFolder = await data.createFolder(targetFolderId, sf.name);
+          unitFolderId = unitFolder.id;
+        }
 
         // 3. Questions inside unit
         const questions = sf.questions || [];
@@ -66,7 +93,7 @@ export default function BatchImportModal({
           const questionName = q.name || `Question ${j + 1}`;
           setStatus(`Adding ${questionName}`);
 
-          await data.createQuestion(unitFolder.id, {
+          await data.createQuestion(unitFolderId, {
             name: questionName,
             question: questionName,
             answer: q.answer || "",
